@@ -1,0 +1,164 @@
+/* 全帳票共通スタイル
+ * 分割レイアウト、表罫線、テキスト配置
+ */
+
+/* ===== 分割レイアウト ===== */
+.split-1-2 {
+  display: flex;
+  gap: 5mm;
+}
+.split-1-2 > :first-child { flex: 1; }
+.split-1-2 > :last-child  { flex: 2; }
+
+.split-2-1 {
+  display: flex;
+  gap: 5mm;
+}
+.split-2-1 > :first-child { flex: 2; }
+.split-2-1 > :last-child  { flex: 1; }
+
+/* ===== 書類タイトル ===== */
+.document-title {
+  text-align: center;
+  font-size: 18pt;
+  font-weight: bold;
+  letter-spacing: 8mm;
+  margin: 0 0 8mm 0;
+  padding: 0;
+}
+
+/* ===== 明細テーブル ===== */
+.items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 9pt;
+  margin: 4mm 0;
+}
+
+.items-table th,
+.items-table td {
+  border: 0.3mm solid #333;
+  padding: 1.5mm 2mm;
+  vertical-align: middle;
+}
+
+.items-table thead th {
+  background: #f0f0f0;
+  font-weight: bold;
+  text-align: center;
+  font-size: 8.5pt;
+}
+
+/* カラム幅定義 */
+.col-no          { width: 8mm;   text-align: center; }
+.col-description { width: auto; }
+.col-quantity    { width: 18mm;  text-align: right; }
+.col-unit        { width: 14mm;  text-align: center; }
+.col-price       { width: 25mm;  text-align: right; }
+.col-amount      { width: 28mm;  text-align: right; }
+
+/* ===== テキスト配置ユーティリティ ===== */
+.center { text-align: center; }
+.right  { text-align: right; }
+.left   { text-align: left; }
+
+/* ===== 集計テーブル ===== */
+.totals-table {
+  margin-left: auto;
+  border-collapse: collapse;
+  font-size: 9.5pt;
+}
+
+.totals-table td {
+  padding: 1mm 3mm;
+  border: 0.3mm solid #333;
+}
+
+.totals-table td:last-child {
+  text-align: right;
+  min-width: 30mm;
+}
+
+.totals-table .grand-total td {
+  font-weight: bold;
+  font-size: 10.5pt;
+  background: #f8f8f8;
+}
+
+/* ===== 宛先・発行者エリア ===== */
+.recipient-area {
+  font-size: 10pt;
+}
+
+.recipient-area .company-name {
+  font-size: 12pt;
+  font-weight: bold;
+}
+
+.recipient-area .underline {
+  border-bottom: 0.5mm solid #333;
+  margin-top: 1mm;
+}
+
+.issuer-area {
+  font-size: 9pt;
+  position: relative;
+}
+
+.document-meta {
+  text-align: right;
+  font-size: 9pt;
+  margin-bottom: 3mm;
+}
+
+/* ===== 合計金額表示 ===== */
+.summary-section {
+  margin: 5mm 0;
+  padding: 3mm;
+  border: 0.5mm solid #333;
+}
+
+.total-value {
+  font-size: 14pt;
+  font-weight: bold;
+}
+
+/* ===== 備考・条件 ===== */
+.remarks-section {
+  margin-top: 5mm;
+  font-size: 9pt;
+}
+
+.remarks-label {
+  font-weight: bold;
+  margin-bottom: 1mm;
+}
+
+.remarks-content {
+  border: 0.3mm solid #999;
+  padding: 2mm;
+  min-height: 15mm;
+}
+
+.conditions-section {
+  margin-top: 3mm;
+  font-size: 8.5pt;
+  color: #444;
+}
+
+.conditions-section > div {
+  margin-bottom: 1mm;
+}
+
+/* ===== contenteditable 視覚フィードバック（画面表示時のみ） ===== */
+@media screen {
+  [contenteditable="true"]:hover {
+    outline: 1px dashed #aaa;
+    outline-offset: 1px;
+  }
+  [contenteditable="true"]:focus {
+    outline: 2px solid #4a90d9;
+    outline-offset: 1px;
+    background: rgba(74, 144, 217, 0.05);
+  }
+}

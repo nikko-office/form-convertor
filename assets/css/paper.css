@@ -1,0 +1,70 @@
+/* 用紙サイズ・向きの定義
+ * A4/A5、縦/横のCSS @page定義とページ寸法
+ */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', sans-serif;
+  font-size: 10pt;
+  line-height: 1.5;
+  color: #222;
+  -webkit-print-color-adjust: exact;
+  color-adjust: exact;
+}
+
+/* ===== ページコンテナ ===== */
+.page {
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+/* A4 縦向き (210mm × 297mm) */
+.page.a4.portrait {
+  width: 210mm;
+  height: 296.5mm;
+  padding: 15mm 20mm;
+}
+
+/* A4 横向き (297mm × 210mm) */
+.page.a4.landscape {
+  width: 297mm;
+  height: 209.5mm;
+  padding: 15mm 20mm;
+}
+
+/* A5 縦向き (148mm × 210mm) */
+.page.a5.portrait {
+  width: 148mm;
+  height: 209.5mm;
+  padding: 10mm 15mm;
+}
+
+/* A5 横向き (210mm × 148mm) */
+.page.a5.landscape {
+  width: 210mm;
+  height: 147.5mm;
+  padding: 10mm 15mm;
+}
+
+/* ===== 画面プレビュー用装飾 ===== */
+@media screen {
+  body {
+    background: #e0e0e0;
+  }
+  .page {
+    background: white;
+    box-shadow: 0 1mm 4mm rgba(0, 0, 0, 0.2);
+    margin: 10mm auto;
+  }
+}
+
+/* ===== 印刷・PDF出力用 ===== */
+@media print {
+  .page {
+    page-break-after: always;
+    margin: 0;
+    box-shadow: none;
+  }
+}

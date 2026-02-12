@@ -1,0 +1,39 @@
+/* ハンコ・ロゴ オーバーレイ表示
+ * CSS multiply blend mode で下地の文字を透かすリアルな印影を再現
+ */
+
+.stamp-container {
+  position: absolute;
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* 社内ハンコ */
+.stamp-hanko {
+  width: 25mm;
+  height: 25mm;
+  top: 35mm;
+  right: 22mm;
+  mix-blend-mode: multiply;
+}
+
+/* 会社ロゴ */
+.stamp-logo {
+  width: 40mm;
+  height: auto;
+  top: 8mm;
+  right: 20mm;
+}
+
+.stamp-container svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* 印刷時もblend modeを維持 */
+@media print {
+  .stamp-hanko {
+    mix-blend-mode: multiply;
+  }
+}

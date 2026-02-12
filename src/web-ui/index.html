@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MasterPiece Mini</title>
+  <link rel="stylesheet" href="ui.css">
+</head>
+<body>
+  <!-- ===== ヘッダー ===== -->
+  <header class="header">
+    <h1 class="header-title">MasterPiece Mini</h1>
+    <nav class="header-nav">
+      <button class="nav-btn active" data-page="generate">帳票作成</button>
+      <button class="nav-btn" data-page="issuers">自社情報</button>
+      <button class="nav-btn" data-page="recipients">得意先</button>
+    </nav>
+    <span class="header-version">v0.1.0</span>
+  </header>
+
+  <!-- ===== 帳票作成ページ ===== -->
+  <main id="page-generate" class="page active">
+    <div class="generate-layout">
+
+      <!-- 左パネル: 入力 -->
+      <div class="panel panel-input">
+        <h2 class="panel-title">入力</h2>
+
+        <!-- テンプレート・用紙設定 -->
+        <div class="form-group">
+          <label>テンプレート</label>
+          <select id="sel-template"><option value="見積書">見積書</option></select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>用紙</label>
+            <select id="sel-paper">
+              <option value="A4">A4</option>
+              <option value="A5">A5</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>向き</label>
+            <select id="sel-orientation">
+              <option value="portrait">縦</option>
+              <option value="landscape">横</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 自社情報・得意先セレクター -->
+        <div class="form-group">
+          <label>自社情報</label>
+          <select id="sel-issuer"><option value="">（未選択）</option></select>
+        </div>
+        <div class="form-group">
+          <label>得意先</label>
+          <select id="sel-recipient"><option value="">（未選択）</option></select>
+        </div>
+
+        <!-- 書類情報 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label>発行日</label>
+            <input type="date" id="inp-date" />
+          </div>
+          <div class="form-group">
+            <label>書類番号</label>
+            <input type="text" id="inp-number" placeholder="EST-2026-001" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>件名</label>
+          <input type="text" id="inp-subject" placeholder="件名を入力" />
+        </div>
+
+        <!-- TSV貼り付け -->
+        <div class="form-group">
+          <label>明細（TSV貼り付け）<small>Excelからコピペ可</small></label>
+          <textarea id="inp-tsv" rows="6" placeholder="品名&#9;数量&#9;単位&#9;単価&#10;ボルト&#9;100&#9;本&#9;50"></textarea>
+        </div>
+
+        <!-- 備考・条件 -->
+        <div class="form-group">
+          <label>備考</label>
+          <textarea id="inp-remarks" rows="2"></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>有効期限</label>
+            <input type="text" id="inp-valid" />
+          </div>
+          <div class="form-group">
+            <label>支払条件</label>
+            <input type="text" id="inp-payment" />
+          </div>
+        </div>
+
+        <!-- 表示設定 -->
+        <details class="toggle-section" open>
+          <summary class="toggle-header">表示設定</summary>
+          <div class="toggle-grid">
+            <label class="checkbox-label"><input type="checkbox" id="chk-stamp" checked /> ハンコ</label>
+            <label class="checkbox-label"><input type="checkbox" id="chk-logo" checked /> ロゴ</label>
+            <label class="checkbox-label"><input type="checkbox" id="vis-issuer-fax" checked /> FAX</label>
+            <label class="checkbox-label"><input type="checkbox" id="vis-subject" checked /> 件名</label>
+            <label class="checkbox-label"><input type="checkbox" id="vis-total-summary" checked /> 合計金額欄</label>
+            <label class="checkbox-label"><input type="checkbox" id="vis-remarks" checked /> 備考</label>
+            <label class="checkbox-label"><input type="checkbox" id="vis-valid-until" checked /> 有効期限</label>
+            <label class="checkbox-label"><input type="checkbox" id="vis-payment-terms" checked /> 支払条件</label>
+            <label class="checkbox-label"><input type="checkbox" id="vis-delivery-date" checked /> 納期</label>
+          </div>
+        </details>
+
+        <!-- アクションボタン -->
+        <div class="actions">
+          <button id="btn-preview" class="btn btn-secondary">プレビュー</button>
+          <button id="btn-pdf" class="btn btn-primary">PDF生成</button>
+        </div>
+      </div>
+
+      <!-- 右パネル: プレビュー -->
+      <div class="panel panel-preview">
+        <h2 class="panel-title">プレビュー</h2>
+        <div id="preview-container">
+          <div id="preview-placeholder">左のフォームに入力して「プレビュー」を押してください</div>
+          <iframe id="preview-frame" style="display:none;"></iframe>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== 自社情報管理ページ ===== -->
+  <main id="page-issuers" class="page">
+    <div class="manage-layout">
+      <div class="manage-list">
+        <div class="manage-header">
+          <h2>自社情報</h2>
+          <button id="btn-issuer-new" class="btn btn-primary btn-sm">新規追加</button>
+        </div>
+        <div id="issuer-list" class="card-list"></div>
+      </div>
+      <div class="manage-form" id="issuer-form-panel" style="display:none;">
+        <h3 id="issuer-form-title">自社情報を追加</h3>
+        <input type="hidden" id="issuer-id" />
+        <div class="form-group">
+          <label>会社名 <span class="req">*</span></label>
+          <input type="text" id="issuer-name" required />
+        </div>
+        <div class="form-group">
+          <label>住所 <span class="req">*</span></label>
+          <input type="text" id="issuer-address" required />
+        </div>
+        <div class="form-group">
+          <label>TEL <span class="req">*</span></label>
+          <input type="text" id="issuer-tel" required />
+        </div>
+        <div class="form-group">
+          <label>FAX</label>
+          <input type="text" id="issuer-fax" />
+        </div>
+        <label class="checkbox-label">
+          <input type="checkbox" id="issuer-default" /> デフォルトに設定
+        </label>
+        <div class="actions">
+          <button id="btn-issuer-cancel" class="btn btn-secondary btn-sm">キャンセル</button>
+          <button id="btn-issuer-save" class="btn btn-primary btn-sm">保存</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== 得意先管理ページ ===== -->
+  <main id="page-recipients" class="page">
+    <div class="manage-layout">
+      <div class="manage-list">
+        <div class="manage-header">
+          <h2>得意先</h2>
+          <button id="btn-recipient-new" class="btn btn-primary btn-sm">新規追加</button>
+        </div>
+        <div id="recipient-list" class="card-list"></div>
+      </div>
+      <div class="manage-form" id="recipient-form-panel" style="display:none;">
+        <h3 id="recipient-form-title">得意先を追加</h3>
+        <input type="hidden" id="recipient-id" />
+        <div class="form-group">
+          <label>会社名 <span class="req">*</span></label>
+          <input type="text" id="recipient-name" required />
+        </div>
+        <div class="form-group">
+          <label>部署</label>
+          <input type="text" id="recipient-department" />
+        </div>
+        <div class="form-group">
+          <label>担当者名</label>
+          <input type="text" id="recipient-person" />
+        </div>
+        <div class="form-group">
+          <label>敬称</label>
+          <select id="recipient-honorific">
+            <option value="御中">御中</option>
+            <option value="様">様</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>住所</label>
+          <input type="text" id="recipient-address" />
+        </div>
+        <div class="form-group">
+          <label>TEL</label>
+          <input type="text" id="recipient-tel" />
+        </div>
+        <div class="actions">
+          <button id="btn-recipient-cancel" class="btn btn-secondary btn-sm">キャンセル</button>
+          <button id="btn-recipient-save" class="btn btn-primary btn-sm">保存</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

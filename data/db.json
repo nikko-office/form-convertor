@@ -1,0 +1,22 @@
+{
+  "issuers": [
+    {
+      "companyName": "日興金属株式会社",
+      "address": "〒660-0805 兵庫県尼崎市西長洲町2-4-5",
+      "tel": "06-6482-3051",
+      "fax": "06-6482-3054",
+      "representative": "山田太郎",
+      "isDefault": true,
+      "id": "mlk04lru1n1o"
+    }
+  ],
+  "recipients": [
+    {
+      "companyName": "テスト建設株式会社",
+      "department": "資材部",
+      "personName": "鈴木一郎",
+      "honorific": "様",
+      "id": "mlk04rmsj0kn"
+    }
+  ]
+}

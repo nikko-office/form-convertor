@@ -1,0 +1,273 @@
+/* MasterPiece Mini Web UI */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f5f5f5;
+  --surface: #fff;
+  --border: #ddd;
+  --text: #222;
+  --text-muted: #888;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --danger: #dc2626;
+  --danger-hover: #b91c1c;
+  --radius: 6px;
+}
+
+body {
+  font-family: 'Segoe UI', 'Hiragino Kaku Gothic Pro', 'Yu Gothic', 'Meiryo', sans-serif;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* ===== ヘッダー ===== */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.header-title {
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.header-nav { display: flex; gap: 4px; }
+.nav-btn {
+  padding: 6px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+}
+.nav-btn:hover { background: #f0f0f0; }
+.nav-btn.active {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+.header-version {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+/* ===== ページ切替 ===== */
+.page { display: none; padding: 16px 20px; }
+.page.active { display: block; }
+
+/* ===== 帳票作成レイアウト ===== */
+.generate-layout {
+  display: flex;
+  gap: 16px;
+  height: calc(100vh - 60px);
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  overflow-y: auto;
+}
+.panel-input { width: 380px; flex-shrink: 0; }
+.panel-preview { flex: 1; display: flex; flex-direction: column; }
+.panel-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* ===== フォーム要素 ===== */
+.form-group { margin-bottom: 10px; }
+.form-group label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  margin-bottom: 3px;
+  color: #555;
+}
+.form-group label small { font-weight: 400; color: var(--text-muted); margin-left: 4px; }
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+}
+.form-group textarea { resize: vertical; }
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+.form-row { display: flex; gap: 8px; }
+.form-row .form-group { flex: 1; }
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-right: 12px;
+}
+
+/* ===== 表示設定トグルセクション ===== */
+.toggle-section {
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0;
+}
+.toggle-header {
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #555;
+  cursor: pointer;
+  list-style: none;
+}
+.toggle-header::marker { content: ''; }
+.toggle-header::before {
+  content: '\25B6';
+  display: inline-block;
+  margin-right: 6px;
+  font-size: 10px;
+  transition: transform 0.15s;
+}
+details[open] > .toggle-header::before {
+  transform: rotate(90deg);
+}
+.toggle-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 4px 8px;
+  padding: 6px 10px 10px;
+}
+
+.req { color: var(--danger); }
+
+/* ===== ボタン ===== */
+.btn {
+  padding: 8px 18px;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-sm { padding: 6px 12px; font-size: 12px; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+.btn-secondary { background: #e5e7eb; color: var(--text); }
+.btn-secondary:hover { background: #d1d5db; }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { background: var(--danger-hover); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+/* ===== プレビュー ===== */
+#preview-container {
+  flex: 1;
+  position: relative;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+#preview-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+#preview-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: #e0e0e0;
+}
+
+/* ===== 管理画面レイアウト ===== */
+.manage-layout {
+  display: flex;
+  gap: 20px;
+  max-width: 900px;
+}
+.manage-list { flex: 1; }
+.manage-form {
+  width: 360px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+}
+.manage-form h3 {
+  font-size: 14px;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.manage-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.manage-header h2 { font-size: 16px; }
+
+/* ===== カードリスト ===== */
+.card-list { display: flex; flex-direction: column; gap: 8px; }
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.card-body { flex: 1; }
+.card-body .company-name { font-weight: 600; font-size: 14px; }
+.card-body .detail { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.card-badge {
+  font-size: 10px;
+  padding: 2px 6px;
+  background: var(--primary);
+  color: #fff;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.card-actions { display: flex; gap: 4px; flex-shrink: 0; }
+.card-actions button {
+  padding: 4px 8px;
+  font-size: 11px;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  background: transparent;
+  cursor: pointer;
+}
+.card-actions button:hover { background: #f0f0f0; }
+.card-actions .btn-delete { color: var(--danger); border-color: var(--danger); }
+.card-actions .btn-delete:hover { background: #fef2f2; }

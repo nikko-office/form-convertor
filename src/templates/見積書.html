@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>見積書</title>
+  <!-- CSS は template-engine によりインライン化される -->
+  {{{styles}}}
+</head>
+<body>
+  <div class="page a4 portrait">
+
+    <!-- ===== 書類タイトル ===== -->
+    <h1 class="document-title" contenteditable="true">見 積 書</h1>
+
+    <!-- ===== 上部セクション（1:2 split） ===== -->
+    <div class="header-section split-1-2">
+
+      <!-- 左: 宛先情報 (1/3幅) -->
+      <div class="recipient-area">
+        <div class="company-name" contenteditable="true">{{recipient.companyName}}</div>
+        {{#if recipient.department}}
+        <div contenteditable="true">{{recipient.department}}</div>
+        {{/if}}
+        <div contenteditable="true">{{recipient.personName}} {{recipient.honorific}}</div>
+        <div class="underline"></div>
+      </div>
+
+      <!-- 右: 発行者情報 + 日付・番号 -->
+      <div class="issuer-area">
+        <div class="document-meta">
+          <div>見積日：<span contenteditable="true">{{documentDate}}</span></div>
+          <div>見積番号：<span contenteditable="true">{{documentNumber}}</span></div>
+        </div>
+        <div class="issuer-info">
+          <div contenteditable="true">{{issuer.companyName}}</div>
+          <div contenteditable="true">{{issuer.address}}</div>
+          <div contenteditable="true">TEL: {{issuer.tel}}</div>
+          {{#if visibility.issuerFax}}
+          {{#if issuer.fax}}
+          <div contenteditable="true">FAX: {{issuer.fax}}</div>
+          {{/if}}
+          {{/if}}
+        </div>
+
+        <!-- スタンプオーバーレイ -->
+        {{#if showStamp}}
+        <div class="stamp-container stamp-hanko">
+          {{{stampSvg}}}
+        </div>
+        {{/if}}
+
+        {{#if showLogo}}
+        <div class="stamp-container stamp-logo">
+          {{{logoSvg}}}
+        </div>
+        {{/if}}
+      </div>
+    </div>
+
+    <!-- ===== 件名・合計金額 ===== -->
+    {{#if visibility.subject}}
+    <div class="summary-section">
+      <div>
+        件名：<span contenteditable="true">{{subject}}</span>
+      </div>
+      {{#if visibility.totalSummary}}
+      <div style="margin-top: 2mm;">
+        合計金額（税込）：<span class="total-value">¥{{formattedTotal}}</span>
+      </div>
+      {{/if}}
+    </div>
+    {{else}}
+    {{#if visibility.totalSummary}}
+    <div class="summary-section">
+      <div>
+        合計金額（税込）：<span class="total-value">¥{{formattedTotal}}</span>
+      </div>
+    </div>
+    {{/if}}
+    {{/if}}
+
+    <!-- ===== 明細テーブル ===== -->
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th class="col-no">No.</th>
+          <th class="col-description">品名・摘要</th>
+          <th class="col-quantity">数量</th>
+          <th class="col-unit">単位</th>
+          <th class="col-price">単価</th>
+          <th class="col-amount">金額</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each items}}
+        <tr>
+          <td class="center">{{this.index}}</td>
+          <td contenteditable="true">{{this.description}}</td>
+          <td class="right" contenteditable="true">{{this.quantity}}</td>
+          <td class="center" contenteditable="true">{{this.unit}}</td>
+          <td class="right" contenteditable="true">{{this.formattedUnitPrice}}</td>
+          <td class="right">{{this.formattedAmount}}</td>
+        </tr>
+        {{/each}}
+        {{#each emptyRows}}
+        <tr>
+          <td class="center">&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+          <td>&nbsp;</td>
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <!-- ===== 小計・消費税・合計 ===== -->
+    <div class="totals-section">
+      <table class="totals-table">
+        <tr>
+          <td>小計</td>
+          <td class="right">¥{{formattedSubtotal}}</td>
+        </tr>
+        <tr>
+          <td>消費税（{{taxRatePercent}}%）</td>
+          <td class="right">¥{{formattedTaxAmount}}</td>
+        </tr>
+        <tr class="grand-total">
+          <td>合計</td>
+          <td class="right">¥{{formattedTotal}}</td>
+        </tr>
+      </table>
+    </div>
+
+    <!-- ===== 備考 ===== -->
+    {{#if visibility.remarks}}
+    <div class="remarks-section">
+      <div class="remarks-label">備考</div>
+      <div class="remarks-content" contenteditable="true">{{remarks}}</div>
+    </div>
+    {{/if}}
+
+    <!-- ===== 条件 ===== -->
+    <div class="conditions-section">
+      {{#if visibility.validUntil}}
+      {{#if validUntil}}
+      <div>有効期限：<span contenteditable="true">{{validUntil}}</span></div>
+      {{/if}}
+      {{/if}}
+      {{#if visibility.paymentTerms}}
+      {{#if paymentTerms}}
+      <div>支払条件：<span contenteditable="true">{{paymentTerms}}</span></div>
+      {{/if}}
+      {{/if}}
+      {{#if visibility.deliveryDate}}
+      {{#if deliveryDate}}
+      <div>納期：<span contenteditable="true">{{deliveryDate}}</span></div>
+      {{/if}}
+      {{/if}}
+    </div>
+
+    <!-- ===== 埋め込み画像 ===== -->
+    {{#each images}}
+    <div class="embedded-image" style="margin-top: 3mm;">
+      <img src="{{this.dataUrl}}" style="max-width: 100%; {{#if this.width}}width: {{this.width}};{{/if}} {{#if this.height}}height: {{this.height}};{{/if}}" alt="" />
+    </div>
+    {{/each}}
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "template": "見積書",
+  "data": {
+    "documentDate": "2026-02-13",
+    "documentNumber": "EST-001",
+    "issuer": { "companyName": "Test Corp", "address": "Tokyo", "tel": "03-0000" },
+    "recipient": { "companyName": "Sample Corp" },
+    "items": [{ "description": "Bolt", "quantity": 100, "unit": "pcs", "unitPrice": 50 }]
+  }
+}
