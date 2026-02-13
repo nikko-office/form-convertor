@@ -33,7 +33,6 @@ export interface TemplateData {
 
   recipient: {
     companyName: string;
-    department?: string;
     personName?: string;
     honorific?: string;
   };
@@ -62,6 +61,10 @@ export interface TemplateData {
   visibility: FieldVisibility;
 
   images?: EmbeddedImage[];
+
+  // 動的TSVテーブル（任意カラム対応）
+  tsvColumns?: string[];
+  tsvRows?: string[][];
 }
 
 export interface FieldVisibility {
@@ -184,6 +187,9 @@ export async function renderTemplate(templateName: string, data: TemplateData): 
   const emptyRowCount = Math.max(0, MIN_ROWS - formattedItems.length);
   const emptyRows = Array(emptyRowCount).fill({});
 
+  // 動的TSVテーブルがあるか
+  const hasDynamicTable = data.tsvColumns && data.tsvColumns.length > 0;
+
   // テンプレートデータ構築
   const templateData = {
     ...data,
@@ -191,11 +197,12 @@ export async function renderTemplate(templateName: string, data: TemplateData): 
     stampSvg,
     logoSvg,
     items: formattedItems,
-    emptyRows,
+    emptyRows: hasDynamicTable ? [] : emptyRows,
     formattedSubtotal: formatCurrency(data.subtotal),
     formattedTaxAmount: formatCurrency(data.taxAmount),
     formattedTotal: formatCurrency(data.total),
     taxRatePercent: taxRateToPercent(data.taxRate || 0.10),
+    hasDynamicTable,
   };
 
   return template(templateData);

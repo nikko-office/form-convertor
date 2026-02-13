@@ -113,7 +113,6 @@ recipientCmd
   .command('add')
   .description('得意先を追加')
   .requiredOption('--name <name>', '会社名')
-  .option('--department <dept>', '部署')
   .option('--person <name>', '担当者名')
   .option('--honorific <title>', '敬称（様/御中）', '御中')
   .option('--address <address>', '住所')
@@ -125,7 +124,6 @@ recipientCmd
   .command('update <id>')
   .description('得意先を更新')
   .option('--name <name>', '会社名')
-  .option('--department <dept>', '部署')
   .option('--person <name>', '担当者名')
   .option('--honorific <title>', '敬称')
   .option('--address <address>', '住所')
@@ -145,9 +143,10 @@ program
   .description('プレビューサーバーを起動する')
   .option('-p, --port <number>', 'ポート番号', '3000')
   .option('--host <addr>', 'ホスト', 'localhost')
-  .action(async (opts: { port: string; host: string }) => {
+  .option('--no-open', 'ブラウザを自動で開かない')
+  .action(async (opts: { port: string; host: string; open: boolean }) => {
     const { startServer } = await import('../server/index.js');
-    await startServer({ port: parseInt(opts.port, 10), host: opts.host });
+    await startServer({ port: parseInt(opts.port, 10), host: opts.host, open: opts.open });
   });
 
 program.parse();

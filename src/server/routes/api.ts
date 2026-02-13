@@ -8,10 +8,20 @@ import { calculateTotals, calculateLineAmount, formatCurrency, taxRateToPercent 
 import {
   listIssuers, addIssuer, updateIssuer, deleteIssuer, getIssuer,
   listRecipients, addRecipient, updateRecipient, deleteRecipient, getRecipient, searchRecipients,
-  type Issuer, type Recipient,
+  getNextDocumentNumber,
+  listDocuments, getDocument, saveDocument, updateDocument, deleteDocument,
+  type Issuer, type Recipient, type SavedDocument,
 } from '../../core/database.js';
 
 export async function registerApiRoutes(app: FastifyInstance) {
+
+  // ===== 書類番号の自動採番 =====
+
+  app.get<{ Querystring: { prefix?: string } }>('/next-document-number', async (req) => {
+    const prefix = req.query.prefix || 'EST';
+    const number = await getNextDocumentNumber(prefix);
+    return { number };
+  });
 
   // ===== テンプレート =====
 
@@ -122,6 +132,43 @@ export async function registerApiRoutes(app: FastifyInstance) {
     }
     return { success: true };
   });
+
+  // ===== 帳票保存（Document） =====
+
+  app.get('/documents', async () => {
+    return await listDocuments();
+  });
+
+  app.get<{ Params: { id: string } }>('/documents/:id', async (req, reply) => {
+    const doc = await getDocument(req.params.id);
+    if (!doc) {
+      reply.status(404);
+      return { error: '帳票が見つかりません' };
+    }
+    return doc;
+  });
+
+  app.post<{ Body: { template: string; documentNumber: string; documentDate: string; recipientName: string; subject?: string; formData: Record<string, unknown> } }>('/documents', async (req) => {
+    return await saveDocument(req.body);
+  });
+
+  app.put<{ Params: { id: string }; Body: { template?: string; documentNumber?: string; documentDate?: string; recipientName?: string; subject?: string; formData?: Record<string, unknown> } }>('/documents/:id', async (req, reply) => {
+    const result = await updateDocument(req.params.id, req.body);
+    if (!result) {
+      reply.status(404);
+      return { error: '帳票が見つかりません' };
+    }
+    return result;
+  });
+
+  app.delete<{ Params: { id: string } }>('/documents/:id', async (req, reply) => {
+    const deleted = await deleteDocument(req.params.id);
+    if (!deleted) {
+      reply.status(404);
+      return { error: '帳票が見つかりません' };
+    }
+    return { success: true };
+  });
 }
 
 // リクエストデータからTemplateDataを構築する
@@ -163,10 +210,22 @@ function buildTemplateDataFromRequest(
     orientation,
     showStamp: raw.showStamp !== false,
     showLogo: raw.showLogo !== false,
-    visibility: {
-      ...DEFAULT_VISIBILITY,
-      ...(raw.visibility as Partial<FieldVisibility> ?? {}),
-    },
+    visibility: buildVisibility(raw.visibility as Record<string, unknown> | undefined),
     images: raw.images as TemplateData['images'],
+    tsvColumns: raw.tsvColumns as string[] | undefined,
+    tsvRows: raw.tsvRows as string[][] | undefined,
+  };
+}
+
+function buildVisibility(raw: Record<string, unknown> | undefined): FieldVisibility {
+  if (!raw) return { ...DEFAULT_VISIBILITY };
+  return {
+    issuerFax: raw.issuerFax !== false,
+    subject: raw.subject !== false,
+    totalSummary: raw.totalSummary !== false,
+    remarks: raw.remarks !== false,
+    validUntil: raw.validUntil !== false,
+    paymentTerms: raw.paymentTerms !== false,
+    deliveryDate: raw.deliveryDate !== false,
   };
 }

@@ -86,7 +86,6 @@ export async function generateCommand(options: GenerateOptions): Promise<void> {
     if (dbRecipient) {
       templateData.recipient = {
         companyName: dbRecipient.companyName,
-        department: dbRecipient.department,
         personName: dbRecipient.personName,
         honorific: dbRecipient.honorific,
       };

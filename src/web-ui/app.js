@@ -11,6 +11,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     // ページ表示時にデータ再読込
     if (btn.dataset.page === 'issuers') loadIssuers();
     if (btn.dataset.page === 'recipients') loadRecipients();
+    if (btn.dataset.page === 'history') loadDocuments();
     if (btn.dataset.page === 'generate') {
       loadIssuerOptions();
       loadRecipientOptions();
@@ -19,12 +20,30 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 });
 
 // ===== 初期化 =====
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   // 今日の日付をセット
   document.getElementById('inp-date').value = new Date().toISOString().split('T')[0];
   loadIssuerOptions();
   loadRecipientOptions();
+  // 書類番号を自動採番
+  await assignDocumentNumber();
 });
+
+async function assignDocumentNumber() {
+  try {
+    const result = await apiJson('GET', '/next-document-number');
+    document.getElementById('inp-number').value = result.number;
+  } catch (e) {
+    const now = new Date();
+    const ts = now.getFullYear().toString()
+      + String(now.getMonth() + 1).padStart(2, '0')
+      + String(now.getDate()).padStart(2, '0')
+      + '-' + String(now.getHours()).padStart(2, '0')
+      + String(now.getMinutes()).padStart(2, '0')
+      + String(now.getSeconds()).padStart(2, '0');
+    document.getElementById('inp-number').value = 'EST-' + ts;
+  }
+}
 
 // ===== API ヘルパー =====
 async function api(method, path, body) {
@@ -61,27 +80,48 @@ async function loadRecipientOptions() {
   for (const r of recipients) {
     const opt = document.createElement('option');
     opt.value = r.id;
-    opt.textContent = r.companyName + (r.department ? ' ' + r.department : '') + (r.personName ? ' ' + r.personName + (r.honorific || '') : '');
+    opt.textContent = r.companyName + (r.personName ? ' ' + r.personName + (r.honorific || '') : '');
     sel.appendChild(opt);
   }
 }
 
 // ===== フォームデータ収集 =====
 function collectFormData() {
-  // TSVパース
+  // TSVパース（動的カラム対応）
   const tsvText = document.getElementById('inp-tsv').value.trim();
   let items = [];
+  let tsvColumns = [];
+  let tsvRows = [];
   if (tsvText) {
     const lines = tsvText.replace(/\r\n/g, '\n').split('\n').filter(l => l.length > 0);
-    // 1行目がヘッダーかどうか判定（数値でなければヘッダー）
-    const firstRow = lines[0].split('\t');
-    const startIdx = isNaN(Number(firstRow[1])) ? 1 : 0;
+    const firstRow = lines[0].split('\t').map(c => c.trim());
+
+    // 1行目がヘッダーかどうか判定
+    const firstVal = firstRow[0].trim();
+    const isHeader = firstVal !== '' && isNaN(Number(firstVal));
+
+    if (isHeader) {
+      tsvColumns = firstRow.filter(c => c !== '');
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split('\t').map(c => c.trim());
+        tsvRows.push(cols);
+      }
+    } else {
+      // ヘッダーなし：全行がデータ
+      for (let i = 0; i < lines.length; i++) {
+        const cols = lines[i].split('\t').map(c => c.trim());
+        tsvRows.push(cols);
+      }
+    }
+
+    // 固定フォーマット（品名/数量/単位/単価）の場合は items も生成
+    const startIdx = isHeader ? 1 : 0;
     for (let i = startIdx; i < lines.length; i++) {
       const cols = lines[i].split('\t');
       items.push({
-        description: cols[0] || '',
+        description: cols[0]?.trim() || '',
         quantity: Number(cols[1]) || 0,
-        unit: cols[2] || '',
+        unit: cols[2]?.trim() || '',
         unitPrice: Number(cols[3]) || 0,
       });
     }
@@ -100,6 +140,8 @@ function collectFormData() {
     documentNumber: document.getElementById('inp-number').value,
     subject: document.getElementById('inp-subject').value,
     items,
+    tsvColumns,
+    tsvRows,
     taxRate: 0.10,
     remarks: document.getElementById('inp-remarks').value,
     validUntil: document.getElementById('inp-valid').value || undefined,
@@ -147,7 +189,6 @@ async function resolveDbData(data) {
     if (found) {
       data.recipient = {
         companyName: found.companyName,
-        department: found.department,
         personName: found.personName,
         honorific: found.honorific,
       };
@@ -160,7 +201,7 @@ async function resolveDbData(data) {
 }
 
 // ===== プレビュー =====
-document.getElementById('btn-preview').addEventListener('click', async () => {
+async function doPreview() {
   const btn = document.getElementById('btn-preview');
   btn.disabled = true;
   btn.textContent = '読込中...';
@@ -191,6 +232,14 @@ document.getElementById('btn-preview').addEventListener('click', async () => {
     btn.disabled = false;
     btn.textContent = 'プレビュー';
   }
+}
+
+document.getElementById('btn-preview').addEventListener('click', doPreview);
+
+// TSV貼り付け時に自動プレビュー
+document.getElementById('inp-tsv').addEventListener('paste', () => {
+  // pasteイベント後にDOMが更新されるので少し待つ
+  setTimeout(doPreview, 100);
 });
 
 // ===== PDF生成 =====
@@ -328,7 +377,6 @@ async function loadRecipients() {
     <div class="card">
       <div class="card-body">
         <div class="company-name">${esc(r.companyName)}</div>
-        ${r.department ? '<div class="detail">' + esc(r.department) + '</div>' : ''}
         ${r.personName ? '<div class="detail">' + esc(r.personName) + (r.honorific || '') + '</div>' : ''}
         ${r.address ? '<div class="detail">' + esc(r.address) + '</div>' : ''}
         ${r.tel ? '<div class="detail">TEL: ' + esc(r.tel) + '</div>' : ''}
@@ -345,7 +393,6 @@ document.getElementById('btn-recipient-new').addEventListener('click', () => {
   document.getElementById('recipient-form-title').textContent = '得意先を追加';
   document.getElementById('recipient-id').value = '';
   document.getElementById('recipient-name').value = '';
-  document.getElementById('recipient-department').value = '';
   document.getElementById('recipient-person').value = '';
   document.getElementById('recipient-honorific').value = '御中';
   document.getElementById('recipient-address').value = '';
@@ -364,7 +411,6 @@ window.editRecipient = async function(id) {
   document.getElementById('recipient-form-title').textContent = '得意先を編集';
   document.getElementById('recipient-id').value = r.id;
   document.getElementById('recipient-name').value = r.companyName;
-  document.getElementById('recipient-department').value = r.department || '';
   document.getElementById('recipient-person').value = r.personName || '';
   document.getElementById('recipient-honorific').value = r.honorific || '御中';
   document.getElementById('recipient-address').value = r.address || '';
@@ -382,7 +428,6 @@ document.getElementById('btn-recipient-save').addEventListener('click', async ()
   const id = document.getElementById('recipient-id').value;
   const body = {
     companyName: document.getElementById('recipient-name').value,
-    department: document.getElementById('recipient-department').value || undefined,
     personName: document.getElementById('recipient-person').value || undefined,
     honorific: document.getElementById('recipient-honorific').value,
     address: document.getElementById('recipient-address').value || undefined,
@@ -403,6 +448,151 @@ document.getElementById('btn-recipient-save').addEventListener('click', async ()
   document.getElementById('recipient-form-panel').style.display = 'none';
   loadRecipients();
 });
+
+
+// =====================================================
+// 帳票保存・履歴
+// =====================================================
+
+// 保存ボタン
+document.getElementById('btn-save').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-save');
+  btn.disabled = true;
+  btn.textContent = '保存中...';
+
+  try {
+    const formData = collectFormData();
+    const template = document.getElementById('sel-template').value;
+    const paperSize = document.getElementById('sel-paper').value;
+    const orientation = document.getElementById('sel-orientation').value;
+
+    // 得意先名を取得（一覧表示用）
+    const recipientSel = document.getElementById('sel-recipient');
+    const recipientName = recipientSel.options[recipientSel.selectedIndex]?.textContent || '';
+
+    const saveData = {
+      template,
+      documentNumber: formData.documentNumber,
+      documentDate: formData.documentDate,
+      recipientName: recipientName.replace('（未選択）', ''),
+      subject: formData.subject || undefined,
+      formData: {
+        ...formData,
+        _template: template,
+        _paperSize: paperSize,
+        _orientation: orientation,
+        _tsvText: document.getElementById('inp-tsv').value,
+      },
+    };
+
+    const editingId = document.getElementById('editing-doc-id').value;
+    if (editingId) {
+      await apiJson('PUT', '/documents/' + editingId, saveData);
+    } else {
+      const result = await apiJson('POST', '/documents', saveData);
+      document.getElementById('editing-doc-id').value = result.id;
+    }
+
+    alert('保存しました');
+  } catch (err) {
+    alert('保存に失敗しました: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '保存';
+  }
+});
+
+// 履歴一覧読込
+async function loadDocuments() {
+  const docs = await apiJson('GET', '/documents');
+  const list = document.getElementById('document-list');
+  if (docs.length === 0) {
+    list.innerHTML = '<p style="color:#888;font-size:13px;">保存済みの帳票はありません</p>';
+    return;
+  }
+  list.innerHTML = docs.map(d => `
+    <div class="card">
+      <div class="card-body">
+        <div class="company-name">${esc(d.template)} - ${esc(d.documentNumber)}</div>
+        <div class="detail">${esc(d.documentDate)} ${esc(d.recipientName)}</div>
+        ${d.subject ? '<div class="detail">' + esc(d.subject) + '</div>' : ''}
+        <div class="detail" style="font-size:11px;color:#999;">${new Date(d.createdAt).toLocaleString('ja-JP')}</div>
+      </div>
+      <div class="card-actions">
+        <button onclick="loadDocument('${d.id}')">読込</button>
+        <button class="btn-delete" onclick="deleteDocumentConfirm('${d.id}')">削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// 帳票を読み込んでフォームに復元
+window.loadDocument = async function(id) {
+  try {
+    const doc = await apiJson('GET', '/documents/' + id);
+    const fd = doc.formData;
+
+    // テンプレート・用紙設定
+    if (fd._template) document.getElementById('sel-template').value = fd._template;
+    if (fd._paperSize) document.getElementById('sel-paper').value = fd._paperSize;
+    if (fd._orientation) document.getElementById('sel-orientation').value = fd._orientation;
+
+    // 基本情報
+    document.getElementById('inp-date').value = fd.documentDate || '';
+    document.getElementById('inp-number').value = fd.documentNumber || '';
+    document.getElementById('inp-subject').value = fd.subject || '';
+    document.getElementById('inp-remarks').value = fd.remarks || '';
+    document.getElementById('inp-valid').value = fd.validUntil || '';
+    document.getElementById('inp-payment').value = fd.paymentTerms || '';
+
+    // TSV
+    if (fd._tsvText) {
+      document.getElementById('inp-tsv').value = fd._tsvText;
+    }
+
+    // セレクター
+    if (fd._issuerId) {
+      await loadIssuerOptions();
+      document.getElementById('sel-issuer').value = fd._issuerId;
+    }
+    if (fd._recipientId) {
+      await loadRecipientOptions();
+      document.getElementById('sel-recipient').value = fd._recipientId;
+    }
+
+    // 表示設定
+    document.getElementById('chk-stamp').checked = fd.showStamp !== false;
+    document.getElementById('chk-logo').checked = fd.showLogo !== false;
+    if (fd.visibility) {
+      document.getElementById('vis-issuer-fax').checked = fd.visibility.issuerFax !== false;
+      document.getElementById('vis-subject').checked = fd.visibility.subject !== false;
+      document.getElementById('vis-total-summary').checked = fd.visibility.totalSummary !== false;
+      document.getElementById('vis-remarks').checked = fd.visibility.remarks !== false;
+      document.getElementById('vis-valid-until').checked = fd.visibility.validUntil !== false;
+      document.getElementById('vis-payment-terms').checked = fd.visibility.paymentTerms !== false;
+      document.getElementById('vis-delivery-date').checked = fd.visibility.deliveryDate !== false;
+    }
+
+    // 編集中IDをセット
+    document.getElementById('editing-doc-id').value = id;
+
+    // 帳票作成ページに切替
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelector('[data-page="generate"]').classList.add('active');
+    document.getElementById('page-generate').classList.add('active');
+
+  } catch (err) {
+    alert('読込に失敗しました: ' + err.message);
+  }
+};
+
+// 帳票削除
+window.deleteDocumentConfirm = async function(id) {
+  if (!confirm('この帳票を削除しますか？')) return;
+  await api('DELETE', '/documents/' + id);
+  loadDocuments();
+};
 
 
 // ===== ユーティリティ =====

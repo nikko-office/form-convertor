@@ -10,7 +10,6 @@ import {
 
 interface RecipientAddOptions {
   name: string;
-  department?: string;
   person?: string;
   honorific?: string;
   address?: string;
@@ -20,7 +19,6 @@ interface RecipientAddOptions {
 
 interface RecipientUpdateOptions {
   name?: string;
-  department?: string;
   person?: string;
   honorific?: string;
   address?: string;
@@ -44,8 +42,7 @@ export async function recipientListCommand(options: { json?: boolean }): Promise
 
   for (const r of recipients) {
     const person = r.personName ? ` ${r.personName}${r.honorific ?? ''}` : '';
-    const dept = r.department ? ` ${r.department}` : '';
-    console.log(`  ${r.id}  ${r.companyName}${dept}${person}`);
+    console.log(`  ${r.id}  ${r.companyName}${person}`);
     if (r.address) console.log(`         ${r.address}`);
     if (r.tel) console.log(`         TEL: ${r.tel}`);
     console.log('');
@@ -77,7 +74,6 @@ export async function recipientSearchCommand(query: string, options: { json?: bo
 export async function recipientAddCommand(options: RecipientAddOptions): Promise<void> {
   const recipient = await addRecipient({
     companyName: options.name,
-    department: options.department,
     personName: options.person,
     honorific: options.honorific ?? '御中',
     address: options.address,
@@ -95,7 +91,6 @@ export async function recipientAddCommand(options: RecipientAddOptions): Promise
 export async function recipientUpdateCommand(id: string, options: RecipientUpdateOptions): Promise<void> {
   const data: Record<string, unknown> = {};
   if (options.name !== undefined) data.companyName = options.name;
-  if (options.department !== undefined) data.department = options.department;
   if (options.person !== undefined) data.personName = options.person;
   if (options.honorific !== undefined) data.honorific = options.honorific;
   if (options.address !== undefined) data.address = options.address;

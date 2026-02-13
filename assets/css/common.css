@@ -10,6 +10,13 @@
 .split-1-2 > :first-child { flex: 1; }
 .split-1-2 > :last-child  { flex: 2; }
 
+.split-1-1 {
+  display: flex;
+  gap: 5mm;
+}
+.split-1-1 > :first-child { flex: 1; }
+.split-1-1 > :last-child  { flex: 1; }
+
 .split-2-1 {
   display: flex;
   gap: 5mm;
@@ -49,13 +56,27 @@
   font-size: 8.5pt;
 }
 
-/* カラム幅定義 */
+/* カラム幅定義（固定フォーマット用） */
 .col-no          { width: 8mm;   text-align: center; }
 .col-description { width: auto; }
 .col-quantity    { width: 18mm;  text-align: right; }
 .col-unit        { width: 14mm;  text-align: center; }
 .col-price       { width: 25mm;  text-align: right; }
 .col-amount      { width: 28mm;  text-align: right; }
+
+/* 動的テーブル（TSV任意カラム） */
+.items-dynamic {
+  table-layout: auto;
+  font-size: 8pt;
+}
+.items-dynamic th,
+.items-dynamic td {
+  white-space: nowrap;
+  padding: 1mm 1.5mm;
+}
+.items-dynamic th {
+  font-size: 7.5pt;
+}
 
 /* ===== テキスト配置ユーティリティ ===== */
 .center { text-align: center; }
@@ -85,14 +106,23 @@
   background: #f8f8f8;
 }
 
+.tax-note {
+  text-align: right;
+  font-size: 8pt;
+  color: #555;
+  margin-top: 1mm;
+}
+
 /* ===== 宛先・発行者エリア ===== */
 .recipient-area {
-  font-size: 10pt;
+  font-size: 12pt;
+  white-space: nowrap;
 }
 
 .recipient-area .company-name {
   font-size: 12pt;
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .recipient-area .underline {
@@ -102,7 +132,12 @@
 
 .issuer-area {
   font-size: 9pt;
+  text-align: right;
   position: relative;
+}
+
+.issuer-info {
+  text-align: right;
 }
 
 .document-meta {

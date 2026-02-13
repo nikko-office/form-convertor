@@ -13,14 +13,11 @@
     <h1 class="document-title" contenteditable="true">見 積 書</h1>
 
     <!-- ===== 上部セクション（1:2 split） ===== -->
-    <div class="header-section split-1-2">
+    <div class="header-section split-1-1">
 
       <!-- 左: 宛先情報 (1/3幅) -->
       <div class="recipient-area">
         <div class="company-name" contenteditable="true">{{recipient.companyName}}</div>
-        {{#if recipient.department}}
-        <div contenteditable="true">{{recipient.department}}</div>
-        {{/if}}
         <div contenteditable="true">{{recipient.personName}} {{recipient.honorific}}</div>
         <div class="underline"></div>
       </div>
@@ -65,7 +62,7 @@
       </div>
       {{#if visibility.totalSummary}}
       <div style="margin-top: 2mm;">
-        合計金額（税込）：<span class="total-value">¥{{formattedTotal}}</span>
+        合計金額：<span class="total-value">¥{{formattedSubtotal}}</span>
       </div>
       {{/if}}
     </div>
@@ -73,13 +70,35 @@
     {{#if visibility.totalSummary}}
     <div class="summary-section">
       <div>
-        合計金額（税込）：<span class="total-value">¥{{formattedTotal}}</span>
+        合計金額：<span class="total-value">¥{{formattedSubtotal}}</span>
       </div>
     </div>
     {{/if}}
     {{/if}}
 
     <!-- ===== 明細テーブル ===== -->
+    {{#if hasDynamicTable}}
+    <!-- 動的カラムテーブル（TSVの列構造をそのまま表示） -->
+    <table class="items-table items-dynamic">
+      <thead>
+        <tr>
+          {{#each tsvColumns}}
+          <th>{{this}}</th>
+          {{/each}}
+        </tr>
+      </thead>
+      <tbody>
+        {{#each tsvRows}}
+        <tr>
+          {{#each this}}
+          <td contenteditable="true">{{this}}</td>
+          {{/each}}
+        </tr>
+        {{/each}}
+      </tbody>
+    </table>
+    {{else}}
+    <!-- 固定フォーマットテーブル（品名/数量/単位/単価/金額） -->
     <table class="items-table">
       <thead>
         <tr>
@@ -114,24 +133,24 @@
         {{/each}}
       </tbody>
     </table>
+    {{/if}}
 
-    <!-- ===== 小計・消費税・合計 ===== -->
+    <!-- ===== 小計・合計 ===== -->
+    {{#unless hasDynamicTable}}
     <div class="totals-section">
       <table class="totals-table">
         <tr>
           <td>小計</td>
           <td class="right">¥{{formattedSubtotal}}</td>
         </tr>
-        <tr>
-          <td>消費税（{{taxRatePercent}}%）</td>
-          <td class="right">¥{{formattedTaxAmount}}</td>
-        </tr>
         <tr class="grand-total">
           <td>合計</td>
-          <td class="right">¥{{formattedTotal}}</td>
+          <td class="right">¥{{formattedSubtotal}}</td>
         </tr>
       </table>
+      <div class="tax-note">※ 消費税別途</div>
     </div>
+    {{/unless}}
 
     <!-- ===== 備考 ===== -->
     {{#if visibility.remarks}}

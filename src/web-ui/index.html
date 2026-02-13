@@ -12,6 +12,7 @@
     <h1 class="header-title">MasterPiece Mini</h1>
     <nav class="header-nav">
       <button class="nav-btn active" data-page="generate">帳票作成</button>
+      <button class="nav-btn" data-page="history">履歴</button>
       <button class="nav-btn" data-page="issuers">自社情報</button>
       <button class="nav-btn" data-page="recipients">得意先</button>
     </nav>
@@ -116,7 +117,9 @@
         <div class="actions">
           <button id="btn-preview" class="btn btn-secondary">プレビュー</button>
           <button id="btn-pdf" class="btn btn-primary">PDF生成</button>
+          <button id="btn-save" class="btn btn-save">保存</button>
         </div>
+        <input type="hidden" id="editing-doc-id" value="" />
       </div>
 
       <!-- 右パネル: プレビュー -->
@@ -126,6 +129,18 @@
           <div id="preview-placeholder">左のフォームに入力して「プレビュー」を押してください</div>
           <iframe id="preview-frame" style="display:none;"></iframe>
         </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== 履歴ページ ===== -->
+  <main id="page-history" class="page">
+    <div class="manage-layout">
+      <div class="manage-list" style="max-width: 100%;">
+        <div class="manage-header">
+          <h2>保存済み帳票</h2>
+        </div>
+        <div id="document-list" class="card-list"></div>
       </div>
     </div>
   </main>
@@ -186,10 +201,6 @@
         <div class="form-group">
           <label>会社名 <span class="req">*</span></label>
           <input type="text" id="recipient-name" required />
-        </div>
-        <div class="form-group">
-          <label>部署</label>
-          <input type="text" id="recipient-department" />
         </div>
         <div class="form-group">
           <label>担当者名</label>

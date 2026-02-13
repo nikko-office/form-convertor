@@ -4,6 +4,7 @@ import Fastify from 'fastify';
 import fastifyStatic from '@fastify/static';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { exec } from 'node:child_process';
 import { createLogger } from '../core/logger.js';
 import { initBrowser, closeBrowser } from '../core/pdf-generator.js';
 import { registerApiRoutes } from './routes/api.js';
@@ -12,7 +13,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const PROJECT_ROOT = resolve(__dirname, '..', '..');
 
-export async function startServer(options: { port: number; host: string }) {
+export async function startServer(options: { port: number; host: string; open?: boolean }) {
   const logger = createLogger();
 
   const app = Fastify({ logger: false });
@@ -40,8 +41,17 @@ export async function startServer(options: { port: number; host: string }) {
   // サーバー起動
   try {
     await app.listen({ port: options.port, host: options.host });
-    logger.info({ port: options.port, host: options.host }, `サーバー起動: http://${options.host}:${options.port}`);
-    console.log(`\nMasterPiece Mini サーバー起動中: http://${options.host}:${options.port}\n`);
+    const url = `http://${options.host}:${options.port}`;
+    logger.info({ port: options.port, host: options.host }, `サーバー起動: ${url}`);
+    console.log(`\nMasterPiece Mini サーバー起動中: ${url}\n`);
+
+    // ブラウザを自動で開く
+    if (options.open !== false) {
+      const cmd = process.platform === 'win32' ? `start ${url}`
+        : process.platform === 'darwin' ? `open ${url}`
+        : `xdg-open ${url}`;
+      exec(cmd);
+    }
   } catch (err) {
     logger.error(err, 'サーバー起動に失敗しました');
     process.exit(1);

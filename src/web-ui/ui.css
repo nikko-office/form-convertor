@@ -176,6 +176,8 @@ details[open] > .toggle-header::before {
 .btn-secondary:hover { background: #d1d5db; }
 .btn-danger { background: var(--danger); color: #fff; }
 .btn-danger:hover { background: var(--danger-hover); }
+.btn-save { background: #16a34a; color: #fff; }
+.btn-save:hover { background: #15803d; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .actions {

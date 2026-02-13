@@ -25,16 +25,29 @@ export interface Issuer {
 export interface Recipient {
   id: string;
   companyName: string;
-  department?: string;
   personName?: string;
   honorific?: string;   // 様、御中 etc.
   address?: string;
   tel?: string;
 }
 
+export interface SavedDocument {
+  id: string;
+  template: string;          // "見積書" etc.
+  documentNumber: string;
+  documentDate: string;
+  recipientName: string;     // 検索・一覧表示用
+  subject?: string;
+  formData: Record<string, unknown>;  // collectFormData() の内容をそのまま保存
+  createdAt: string;         // ISO 8601
+  updatedAt: string;
+}
+
 interface Database {
   issuers: Issuer[];
   recipients: Recipient[];
+  documentCounters?: Record<string, number>;  // "EST-20260213" → 3
+  documents?: SavedDocument[];
 }
 
 // ===== ファイルI/O =====
@@ -137,8 +150,7 @@ export async function searchRecipients(query: string): Promise<Recipient[]> {
   const q = query.toLowerCase();
   return db.recipients.filter(r =>
     r.companyName.toLowerCase().includes(q) ||
-    (r.personName && r.personName.toLowerCase().includes(q)) ||
-    (r.department && r.department.toLowerCase().includes(q))
+    (r.personName && r.personName.toLowerCase().includes(q))
   );
 }
 
@@ -160,11 +172,84 @@ export async function updateRecipient(id: string, data: Partial<Omit<Recipient, 
   return db.recipients[index];
 }
 
+// ===== 書類番号の自動採番 =====
+
+export async function getNextDocumentNumber(prefix: string = 'EST'): Promise<string> {
+  const db = await loadDb();
+  if (!db.documentCounters) db.documentCounters = {};
+
+  const today = new Date();
+  const dateKey = `${prefix}-${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, '0')}${String(today.getDate()).padStart(2, '0')}`;
+
+  const count = (db.documentCounters[dateKey] ?? 0) + 1;
+  db.documentCounters[dateKey] = count;
+  await saveDb(db);
+
+  return `${dateKey}-${String(count).padStart(3, '0')}`;
+}
+
 export async function deleteRecipient(id: string): Promise<boolean> {
   const db = await loadDb();
   const before = db.recipients.length;
   db.recipients = db.recipients.filter(r => r.id !== id);
   if (db.recipients.length === before) return false;
+  await saveDb(db);
+  return true;
+}
+
+// ===== 帳票保存（Document） =====
+
+export async function listDocuments(): Promise<SavedDocument[]> {
+  const db = await loadDb();
+  const docs = db.documents ?? [];
+  // 新しい順
+  return [...docs].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function getDocument(id: string): Promise<SavedDocument | undefined> {
+  const db = await loadDb();
+  return (db.documents ?? []).find(d => d.id === id);
+}
+
+export async function saveDocument(data: Omit<SavedDocument, 'id' | 'createdAt' | 'updatedAt'>): Promise<SavedDocument> {
+  const db = await loadDb();
+  if (!db.documents) db.documents = [];
+
+  const now = new Date().toISOString();
+  const doc: SavedDocument = {
+    ...data,
+    id: generateId(),
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  db.documents.push(doc);
+  await saveDb(db);
+  return doc;
+}
+
+export async function updateDocument(id: string, data: Partial<Omit<SavedDocument, 'id' | 'createdAt'>>): Promise<SavedDocument | undefined> {
+  const db = await loadDb();
+  if (!db.documents) return undefined;
+
+  const index = db.documents.findIndex(d => d.id === id);
+  if (index === -1) return undefined;
+
+  db.documents[index] = {
+    ...db.documents[index],
+    ...data,
+    updatedAt: new Date().toISOString(),
+  };
+  await saveDb(db);
+  return db.documents[index];
+}
+
+export async function deleteDocument(id: string): Promise<boolean> {
+  const db = await loadDb();
+  if (!db.documents) return false;
+  const before = db.documents.length;
+  db.documents = db.documents.filter(d => d.id !== id);
+  if (db.documents.length === before) return false;
   await saveDb(db);
   return true;
 }
